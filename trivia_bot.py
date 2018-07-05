@@ -21,11 +21,14 @@ def get_mouse_position():
 
 
 def start_browser():
+    print("[*] Starting browser")
     options = Options()
     options.add_argument('--headless')
+    options.add_argument('--log-level=3')
     options.add_argument('--disable-gpu')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-setuid-sandbox')
+    options.add_argument('--disable-accelerated-video-decode')
     browser = webdriver.Chrome('E:\Downloads\chromedriver_win32\chromedriver.exe', chrome_options = options)
     browser.get("https://www.google.com/")
     return browser
@@ -72,8 +75,11 @@ def check_answers(hits, a, b, c):
 ascii.splash()
 print('              HQ Bot v1.3')
 print('[*] Press "S" to enter setup')
+print('[*] Press "I" to initialize search engine (takes the most time)')
 print('[*] Press "G" to run')
 print('[*] Press "C" to close')
+print("WARNING: Search engine must have been initialized for the script to successfully run")
+
 while(True):
     pos = get_mouse_position()
     ansFlag = False
@@ -85,18 +91,20 @@ while(True):
         print('[/] Place cursor in the top left corner of question.\n    Press "Q" to capture position of cursor.')
         print('[\] Place cursor in the top left corner of answers block.\n    Press "A" to capture position of cursor.')
 
-        search_engine = start_browser()
+
 
         while(True):
             keyPressed = msvcrt.getch().decode('utf-8').lower()
 
             if(keyPressed == 'q'):
                 quesPos = get_mouse_position()
+                print(quesPos)
                 quesFlag = True
                 print('[+] Question Region Saved')
 
             if(keyPressed == 'a'):
                 ansPos = get_mouse_position()
+                print(ansPos)
                 ansFlag = True
                 print('[+] Answer Region Saved')
 
@@ -104,6 +112,10 @@ while(True):
                 break
 
         print('[+] Setup Complete')
+
+    if(keyPressed == 'i'):
+        search_engine = start_browser()
+        print("[+] Browser Running")
 
     if(keyPressed == 'c'):
         close_browser(search_engine)
@@ -118,18 +130,18 @@ while(True):
         question = pytesseract.image_to_string(Image.open('question.png')).replace("\n", " ").replace("'", " ").encode('utf-8')
         answers = pytesseract.image_to_string(Image.open('answers.png')).split('\n')
 
-        print('Question: ' + question.decode('utf-8'))
+        try:
+            print('Question: ' + question.decode('utf-8'))
+        except UnicodeEncodeError:
+            print('Error Reading Image')
+
         a = answers[0]
-        #print('A ' + a)
 
         b = answers[2]
-        #print('B ' + b)
 
         c = answers[4]
-        #print('C ' + c)
 
 
         print('Correct answer is: ' + check_answers(search(search_engine, question.decode('utf-8')), a, b, c))
-        #print('still in loop')
 
     continue
