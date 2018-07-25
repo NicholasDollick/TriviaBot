@@ -8,7 +8,7 @@ import PIL.ImageGrab
 import msvcrt
 from ctypes import windll, Structure, c_long, byref
 import ascii
-#this is a test
+
 
 class POINT(Structure):
     _fields_ = [('x', c_long), ('y', c_long)]
@@ -46,7 +46,6 @@ def search(browser, search_term):
     hits = browser.find_elements_by_css_selector('.st')
     results = ""
     for hit in hits:
-        #print(hit.text)
         results += hit.text
     return results
 
@@ -73,7 +72,7 @@ def check_answers(hits, a, b, c):
 
 
 ascii.splash()
-print('              HQ Bot v1.3')
+print('              HQ Bot v2.0')
 print('[*] Press "S" to enter setup')
 print('[*] Press "I" to initialize search engine (takes the most time)')
 print('[*] Press "G" to run')
@@ -88,8 +87,8 @@ while(True):
 
     if(keyPressed == 's'):
         print('[+] Entering Setup')
-        print('[/] Place cursor in the top left corner of question.\n    Press "Q" to capture position of cursor.')
-        print('[\] Place cursor in the top left corner of answers block.\n    Press "A" to capture position of cursor.')
+        print('[/] Place cursor in the top left corner of play area.\n    Press "Q" to capture position of cursor.')
+        print('[\] Place cursor in the bottom right corner of play area.\n    Press "A" to capture position of cursor.')
 
 
 
@@ -97,16 +96,16 @@ while(True):
             keyPressed = msvcrt.getch().decode('utf-8').lower()
 
             if(keyPressed == 'q'):
-                quesPos = get_mouse_position()
-                print(quesPos)
+                initialPos = get_mouse_position()  # stores as (x,y). Sets position of origin
+                print(initialPos)
                 quesFlag = True
-                print('[+] Question Region Saved')
+                print('[+] Region Saved')
 
             if(keyPressed == 'a'):
-                ansPos = get_mouse_position()
-                print(ansPos)
+                offsetPos = get_mouse_position()  # stores as (x,y). Records offset in position
+                print(offsetPos)
                 ansFlag = True
-                print('[+] Answer Region Saved')
+                print('[+]  Region Saved')
 
             if(ansFlag and quesFlag):
                 break
@@ -122,13 +121,21 @@ while(True):
         sys.exit(0)
 
     if(keyPressed == 'g'):
-        questionZone = PIL.ImageGrab.grab(bbox=(quesPos[0], quesPos[1], 1195, 410))
+        questionZone = PIL.ImageGrab.grab(bbox=(initialPos[0],  # bbox values: (x, y, x + x offset, y + y offset)
+                                                initialPos[1],
+                                                initialPos[0] + abs(initialPos[0] - offsetPos[0]),
+                                                initialPos[1] + abs(initialPos[1] - offsetPos[1])))  # these vars need a rename
         questionZone.save('question.png')
-        answerZone = PIL.ImageGrab.grab(bbox=(ansPos[0], ansPos[1], 1190, 680))
-        answerZone.save('answers.png')
         print('[+] Reading Image')
-        question = pytesseract.image_to_string(Image.open('question.png')).replace("\n", " ").replace("'", " ").encode('utf-8')
-        answers = pytesseract.image_to_string(Image.open('answers.png')).split('\n')
+        #question = pytesseract.image_to_string(Image.open('question.png')).replace("\n", " ").replace("'", " ").encode('utf-8')
+        data = pytesseract.image_to_string(Image.open('question.png')).split('\n')
+        answers = list(filter(None, data))[-3:]  # takes the last 3 lines, which contain the answers
+        question = ""
+
+        for i in range(0, (len(data) - len(answers) - 2)):  # assembles question by omitting answers from data string
+            question += data[i] + " "
+
+        question = question.encode('utf-8')  # might not need?
 
         try:
             print('Question: ' + question.decode('utf-8'))
@@ -137,9 +144,9 @@ while(True):
 
         a = answers[0]
 
-        b = answers[2]
+        b = answers[1]
 
-        c = answers[4]
+        c = answers[2]
 
 
         print('Correct answer is: ' + check_answers(search(search_engine, question.decode('utf-8')), a, b, c))
