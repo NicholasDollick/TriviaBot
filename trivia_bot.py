@@ -108,8 +108,8 @@ def run(x1, y1, x2, y2, engine):
 
 
 ascii.splash()
-print('              HQ Bot v2.0')
-
+print('              HQ Bot v2.1')
+print("WARNING: Search engine must have been initialized for the script to successfully run\n")
 
 
 parser = argparse.ArgumentParser(description="Multiple choice trivia bot")
@@ -122,14 +122,18 @@ args = parser.parse_args()
 start_new = False
 running = False
 
-print("WARNING: Search engine must have been initialized for the script to successfully run\n")
-print('[*] Press "I" to initialize search engine (takes the most time)')
-print('[*] Press "G" to run')
-print('[*] Press "C" to close\n')
 
 if args.quick:
     search_engine = start_browser()
     running = True
+
+
+if(not running):
+    print('[*] Press "I" to initialize search engine (takes the most time)')
+
+print('[*] Press "G" to run')
+print('[*] Press "C" to close\n')
+
 if args.size and len(args.size) == 4:
     while(True):
         keyPressed = msvcrt.getch().decode('utf-8').lower()
@@ -147,9 +151,12 @@ if args.size and len(args.size) == 4:
             if(running):
                 close_browser(search_engine)
             sys.exit(0)
+
 if args.new:
     start_new = True
 
+if not args.new or args.quick or args.size:
+    parser.error('No arguments provided.')
 
 if(start_new):
         pos = get_mouse_position()
