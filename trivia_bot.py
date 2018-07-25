@@ -20,6 +20,14 @@ def get_mouse_position():
     return (pt.x, pt.y)
 
 
+def save_position(initial, offset):
+    with open('position.txt', mode = 'w') as file:
+        file.write("x1 = " + str(initial[0]) + "\n" +
+                   "y1 = " + str(initial[1]) + "\n" +
+                   "x2 = " + str(offset[0]) + "\n" +
+                   "y2 = " + str(offset[1]))
+
+
 def start_browser():
     print("[*] Starting browser")
     options = Options()
@@ -29,7 +37,7 @@ def start_browser():
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-setuid-sandbox')
     options.add_argument('--disable-accelerated-video-decode')
-    browser = webdriver.Chrome('E:\Downloads\chromedriver_win32\chromedriver.exe', chrome_options = options)
+    browser = webdriver.Chrome('E:\Downloads\chromedriver_win32\chromedriver.exe', chrome_options=options)
     browser.get("https://www.google.com/")
     return browser
 
@@ -77,7 +85,7 @@ print('[*] Press "S" to enter setup')
 print('[*] Press "I" to initialize search engine (takes the most time)')
 print('[*] Press "G" to run')
 print('[*] Press "C" to close')
-print("WARNING: Search engine must have been initialized for the script to successfully run")
+print("WARNING: Search engine must have been initialized for the script to successfully run\n")
 
 while(True):
     pos = get_mouse_position()
@@ -97,17 +105,18 @@ while(True):
 
             if(keyPressed == 'q'):
                 initialPos = get_mouse_position()  # stores as (x,y). Sets position of origin
-                print(initialPos)
+                #print(initialPos)
                 quesFlag = True
                 print('[+] Region Saved')
 
             if(keyPressed == 'a'):
                 offsetPos = get_mouse_position()  # stores as (x,y). Records offset in position
-                print(offsetPos)
+                #print(offsetPos)
                 ansFlag = True
                 print('[+]  Region Saved')
 
             if(ansFlag and quesFlag):
+                save_position(initialPos, offsetPos)
                 break
 
         print('[+] Setup Complete')
@@ -124,11 +133,11 @@ while(True):
         questionZone = PIL.ImageGrab.grab(bbox=(initialPos[0],  # bbox values: (x, y, x + x offset, y + y offset)
                                                 initialPos[1],
                                                 initialPos[0] + abs(initialPos[0] - offsetPos[0]),
-                                                initialPos[1] + abs(initialPos[1] - offsetPos[1])))  # these vars need a rename
+                                                initialPos[1] + abs(initialPos[1] - offsetPos[1])))
         questionZone.save('question.png')
         print('[+] Reading Image')
-        #question = pytesseract.image_to_string(Image.open('question.png')).replace("\n", " ").replace("'", " ").encode('utf-8')
-        data = pytesseract.image_to_string(Image.open('question.png')).split('\n')
+
+        data = pytesseract.image_to_string(Image.open('question.png')).split('\n')  # raw input data
         answers = list(filter(None, data))[-3:]  # takes the last 3 lines, which contain the answers
         question = ""
 
@@ -147,7 +156,6 @@ while(True):
         b = answers[1]
 
         c = answers[2]
-
 
         print('Correct answer is: ' + check_answers(search(search_engine, question.decode('utf-8')), a, b, c))
 
