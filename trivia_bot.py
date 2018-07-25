@@ -1,4 +1,4 @@
-import time
+import argparse
 import pytesseract
 import sys
 import selenium.webdriver as webdriver
@@ -79,25 +79,86 @@ def check_answers(hits, a, b, c):
     return answer
 
 
+def run(x1, y1, x2, y2, engine):
+    questionZone = PIL.ImageGrab.grab(bbox=(x1, y1,  # bbox values: (x, y, x + x offset, y + y offset)
+                                            x1 + abs(x1 - x2), y1 + abs(y1 - y2)))
+    questionZone.save('question.png')
+    print('[+] Reading Image')
+    data = pytesseract.image_to_string(Image.open('question.png')).split('\n')  # raw input data
+    answers = list(filter(None, data))[-3:]  # takes the last 3 lines, which contain the answers
+    question = ""
+
+    for i in range(0, (len(data) - len(answers) - 2)):  # assembles question by omitting answers from data string
+        question += data[i] + " "
+
+    question = question.encode('utf-8')  # might not need?
+
+    try:
+        print('Question: ' + question.decode('utf-8'))
+    except UnicodeEncodeError:
+        print('Error Reading Image')
+
+    a = answers[0]
+
+    b = answers[1]
+
+    c = answers[2]
+
+    print('Correct answer is: ' + check_answers(search(engine, question.decode('utf-8')), a, b, c))
+
+
 ascii.splash()
 print('              HQ Bot v2.0')
-print('[*] Press "S" to enter setup')
+
+
+parser = argparse.ArgumentParser(description="Multiple choice trivia bot")
+parser.add_argument('-n', '--new', action='store_true', help='ideal for initial use')
+parser.add_argument('-s', '--size', nargs='+', help='bbox size in format: x1 y1 x2 y2')
+parser.add_argument('-q', '--quick', action='store_true', help='initializes browser on startup')
+args = parser.parse_args()
+
+
+start_new = False
+running = False
+search_engine = 0xff
+
+
+if args.quick:
+    search_engine = start_browser()
+    running = True
+if args.size and len(args.size) == 4:
+    while(True):
+        keyPressed = msvcrt.getch().decode('utf-8').lower()
+        if(keyPressed == 'g'):
+            run(int(args.size[0]), int(args.size[1]), int(args.size[2]), int(args.size[3]), search_engine)
+
+        if(keyPressed == 'i' and not running):
+            search_engine = start_browser()
+            print("[+] Browser Running")
+
+        if(keyPressed == 'c'):
+            close_browser(search_engine)
+            sys.exit(0)
+if args.new:
+    start_new = True
+
+
+
 print('[*] Press "I" to initialize search engine (takes the most time)')
 print('[*] Press "G" to run')
 print('[*] Press "C" to close')
 print("WARNING: Search engine must have been initialized for the script to successfully run\n")
 
 while(True):
+
     pos = get_mouse_position()
     ansFlag = False
     quesFlag = False
-    keyPressed = msvcrt.getch().decode('utf-8').lower()
+    #keyPressed = msvcrt.getch().decode('utf-8').lower()
 
-    if(keyPressed == 's'):
-        print('[+] Entering Setup')
+    if(start_new):
         print('[/] Place cursor in the top left corner of play area.\n    Press "Q" to capture position of cursor.')
         print('[\] Place cursor in the bottom right corner of play area.\n    Press "A" to capture position of cursor.')
-
 
 
         while(True):
@@ -105,13 +166,11 @@ while(True):
 
             if(keyPressed == 'q'):
                 initialPos = get_mouse_position()  # stores as (x,y). Sets position of origin
-                #print(initialPos)
                 quesFlag = True
                 print('[+] Region Saved')
 
             if(keyPressed == 'a'):
                 offsetPos = get_mouse_position()  # stores as (x,y). Records offset in position
-                #print(offsetPos)
                 ansFlag = True
                 print('[+]  Region Saved')
 
@@ -121,7 +180,12 @@ while(True):
 
         print('[+] Setup Complete')
 
-    if(keyPressed == 'i'):
+    else:
+        print("HELLO")
+
+    keyPressed = msvcrt.getch().decode('utf-8').lower()
+
+    if(keyPressed == 'i' and not running):
         search_engine = start_browser()
         print("[+] Browser Running")
 
@@ -130,6 +194,9 @@ while(True):
         sys.exit(0)
 
     if(keyPressed == 'g'):
+        run(initialPos[0], initialPos[1], offsetPos[0], offsetPos[1], search_engine)
+
+    '''
         questionZone = PIL.ImageGrab.grab(bbox=(initialPos[0],  # bbox values: (x, y, x + x offset, y + y offset)
                                                 initialPos[1],
                                                 initialPos[0] + abs(initialPos[0] - offsetPos[0]),
@@ -158,5 +225,6 @@ while(True):
         c = answers[2]
 
         print('Correct answer is: ' + check_answers(search(search_engine, question.decode('utf-8')), a, b, c))
-
+    '''
     continue
+
