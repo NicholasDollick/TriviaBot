@@ -111,6 +111,7 @@ ascii.splash()
 print('              HQ Bot v2.0')
 
 
+
 parser = argparse.ArgumentParser(description="Multiple choice trivia bot")
 parser.add_argument('-n', '--new', action='store_true', help='ideal for initial use')
 parser.add_argument('-s', '--size', nargs='+', help='bbox size in format: x1 y1 x2 y2')
@@ -120,8 +121,11 @@ args = parser.parse_args()
 
 start_new = False
 running = False
-search_engine = 0xff
 
+print("WARNING: Search engine must have been initialized for the script to successfully run\n")
+print('[*] Press "I" to initialize search engine (takes the most time)')
+print('[*] Press "G" to run')
+print('[*] Press "C" to close\n')
 
 if args.quick:
     search_engine = start_browser()
@@ -136,27 +140,21 @@ if args.size and len(args.size) == 4:
             search_engine = start_browser()
             print("[+] Browser Running")
 
+        if(keyPressed == 'i' and  running):
+            print("[-] Browser Is Already Running")
+
         if(keyPressed == 'c'):
-            close_browser(search_engine)
+            if(running):
+                close_browser(search_engine)
             sys.exit(0)
 if args.new:
     start_new = True
 
 
-
-print('[*] Press "I" to initialize search engine (takes the most time)')
-print('[*] Press "G" to run')
-print('[*] Press "C" to close')
-print("WARNING: Search engine must have been initialized for the script to successfully run\n")
-
-while(True):
-
-    pos = get_mouse_position()
-    ansFlag = False
-    quesFlag = False
-    #keyPressed = msvcrt.getch().decode('utf-8').lower()
-
-    if(start_new):
+if(start_new):
+        pos = get_mouse_position()
+        ansFlag = False
+        quesFlag = False
         print('[/] Place cursor in the top left corner of play area.\n    Press "Q" to capture position of cursor.')
         print('[\] Place cursor in the bottom right corner of play area.\n    Press "A" to capture position of cursor.')
 
@@ -172,7 +170,7 @@ while(True):
             if(keyPressed == 'a'):
                 offsetPos = get_mouse_position()  # stores as (x,y). Records offset in position
                 ansFlag = True
-                print('[+]  Region Saved')
+                print('[+] Region Saved')
 
             if(ansFlag and quesFlag):
                 save_position(initialPos, offsetPos)
@@ -180,51 +178,22 @@ while(True):
 
         print('[+] Setup Complete')
 
-    else:
-        print("HELLO")
+while(True):
 
     keyPressed = msvcrt.getch().decode('utf-8').lower()
+
+    if(keyPressed == 'i' and  running):
+        print("[-] Browser Is Already Running")
 
     if(keyPressed == 'i' and not running):
         search_engine = start_browser()
         print("[+] Browser Running")
 
     if(keyPressed == 'c'):
-        close_browser(search_engine)
+        if(running):
+            close_browser(search_engine)
         sys.exit(0)
 
     if(keyPressed == 'g'):
         run(initialPos[0], initialPos[1], offsetPos[0], offsetPos[1], search_engine)
-
-    '''
-        questionZone = PIL.ImageGrab.grab(bbox=(initialPos[0],  # bbox values: (x, y, x + x offset, y + y offset)
-                                                initialPos[1],
-                                                initialPos[0] + abs(initialPos[0] - offsetPos[0]),
-                                                initialPos[1] + abs(initialPos[1] - offsetPos[1])))
-        questionZone.save('question.png')
-        print('[+] Reading Image')
-
-        data = pytesseract.image_to_string(Image.open('question.png')).split('\n')  # raw input data
-        answers = list(filter(None, data))[-3:]  # takes the last 3 lines, which contain the answers
-        question = ""
-
-        for i in range(0, (len(data) - len(answers) - 2)):  # assembles question by omitting answers from data string
-            question += data[i] + " "
-
-        question = question.encode('utf-8')  # might not need?
-
-        try:
-            print('Question: ' + question.decode('utf-8'))
-        except UnicodeEncodeError:
-            print('Error Reading Image')
-
-        a = answers[0]
-
-        b = answers[1]
-
-        c = answers[2]
-
-        print('Correct answer is: ' + check_answers(search(search_engine, question.decode('utf-8')), a, b, c))
-    '''
-    continue
 
